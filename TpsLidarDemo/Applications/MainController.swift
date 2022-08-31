@@ -240,7 +240,7 @@ extension MainController {
     func testCallAPI(_ url: URL) {
 //        let plyFileData = (try? Data(contentsOf: url)) ?? Data()
 //        let multipartDatas : [MultipartData] = [
-//            MultipartDataFile(key: "file", fileName: "test.ply", payload: plyFileData, mineType: "application/ply"),
+//            MultipartDataFile(key: "file", fileName: url.path, payload: plyFileData, mineType: "application/ply"),
 //        ]
 //
 //        let router = APIRouter(path: "http://192.168.20.190/api/upload-file",
@@ -252,22 +252,26 @@ extension MainController {
 //            let displayResultController = storyBoard.instantiateViewController(withIdentifier: "displayResult") as! DisplayResultController
 //            self.present(displayResultController, animated: true, completion: nil)
 //        }
-//
-        guard let path = Bundle.main.path(forResource: "nguyen_foot", ofType: "ply") else {return}
-        if  let txt = FileManager.default.contents(atPath: path) {
+//        
+        if  let txt = FileManager.default.contents(atPath: url.path) {
             print(String(data: txt, encoding: .utf8) ?? "")
         }
                 
             let parameters = [
               [
                 "key": "file",
-                "src": path,
+                "src": url.path,
                 "type": "file"
               ]] as [[String : Any]]
         
-        APIRequest.shared.sendAPI(parameters: parameters)
-        
-//        APIRequest.shared.aa(url)
+        APIRequest.shared.sendAPI(parameters: parameters) { data, width, height in
+            let storyBoard: UIStoryboard = UIStoryboard(name: "Main", bundle: nil)
+            let displayResultController = storyBoard.instantiateViewController(withIdentifier: "displayResult") as! DisplayResultController
+            displayResultController.imageBase64String = data
+            displayResultController.width = width
+            displayResultController.height = height
+            self.present(displayResultController, animated: true, completion: nil)
+        }
     }
     
     func goToExportView() -> Void {

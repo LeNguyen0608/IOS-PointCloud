@@ -93,56 +93,69 @@ extension APIRequest {
         return data
     }
     
-    func sendAPI(parameters: [[String: Any]]) {
-            var semaphore = DispatchSemaphore (value: 0)
-
-            let boundary = "Boundary-\(UUID().uuidString)"
-            var body = ""
-            var error: Error? = nil
-            for param in parameters {
-              if param["disabled"] == nil {
+    func sendAPI(parameters: [[String: Any]], _ completion: @escaping (String, Double, Double) -> ()) {
+        var semaphore = DispatchSemaphore (value: 0)
+        
+        let boundary = "Boundary-\(UUID().uuidString)"
+        var body = ""
+        var error: Error? = nil
+        for param in parameters {
+            if param["disabled"] == nil {
                 let paramName = param["key"]!
                 body += "--\(boundary)\r\n"
                 body += "Content-Disposition:form-data; name=\"\(paramName)\""
                 if param["contentType"] != nil {
-                  body += "\r\nContent-Type: \(param["contentType"] as? String ?? "")"
+                    body += "\r\nContent-Type: \(param["contentType"] as? String ?? "")"
                 }
                 let paramType = param["type"] as? String ?? ""
                 if paramType == "text" {
-                  let paramValue = param["value"] as? String ?? ""
-                  body += "\r\n\r\n\(paramValue)\r\n"
+                    let paramValue = param["value"] as? String ?? ""
+                    body += "\r\n\r\n\(paramValue)\r\n"
                 } else {
-                    if let paramSrc = param["src"] as? String, let fileData = try? NSData(contentsOfFile:paramSrc, options:[]) as Data, let fileContent = String(data: fileData as Data, encoding: .utf8) {
-                        
+                    if let paramSrc = param["src"] as? String, let fileData = try? NSData(contentsOfFile:paramSrc, options:[]) as Data, let fileContent = String(data: fileData as Data, encoding: .ascii) {
                         body += "; filename=\"\(paramSrc)\"\r\n"
                         + "Content-Type: \"content-type header\"\r\n\r\n\(fileContent)\r\n"
                     }
-                  
                 }
-              }
             }
-            body += "--\(boundary)--\r\n";
-            let postData = body.data(using: .utf8)
-
-            var request = URLRequest(url: URL(string: "http://192.168.20.190/api/upload-file")!,timeoutInterval: Double.infinity)
-            request.addValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
-
-            request.httpMethod = "POST"
-            request.httpBody = postData
-            
-            let task = URLSession.shared.dataTask(with: request) { data, response, error in
-              guard let data = data else {
+        }
+        body += "--\(boundary)--\r\n";
+        let postData = body.data(using: .ascii)
+        
+        var request = URLRequest(url: URL(string: "http://192.168.20.190/api/upload-file")!,timeoutInterval: Double.infinity)
+        request.addValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        
+        request.httpMethod = "POST"
+        request.httpBody = postData
+        
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            guard let data = data else {
                 print(String(describing: error))
                 semaphore.signal()
                 return
-              }
-              print(String(data: data, encoding: .utf8)!)
-              semaphore.signal()
+            }
+            
+            do {
+                let any = try JSONSerialization.jsonObject(with: data, options: [])
+                let json = JSON(any)
+                
+                if let imageData = json["data"]["image"].rawValue as? String {
+                    completion(imageData,  json["data"]["width"].doubleValue, json["data"]["height"].doubleValue)
+                } else {
+                    completion("", 0.0 , 0.0)
+                }
+                
+            } catch {
+                
             }
 
-            task.resume()
-            semaphore.wait()
+            print(String(data: data, encoding: .utf8)!)
+            semaphore.signal()
         }
+        
+        task.resume()
+        semaphore.wait()
+    }
 }
 
 // MARK: - MultipartData
@@ -159,13 +172,13 @@ final class MultipartDataFile: MultipartData {
     var fileName: String
     var payload: Data
     var mineType: String
-
+    
     
     init(key: String,
          fileName: String,
          payload: Data,
          mineType: String
-        )
+    )
     {
         self.fileName = fileName
         self.payload = payload

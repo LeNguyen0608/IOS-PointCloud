@@ -135,7 +135,9 @@
                         </constraints>
                     </view>
                     <connections>
+                        <outlet property="heightLabel" destination="xn8-08-M9I" id="XrS-hY-xwF"/>
                         <outlet property="resultImage" destination="rGx-NV-ML1" id="0bh-xK-rgj"/>
+                        <outlet property="widthLabel" destination="DP3-qg-ZiI" id="H09-rs-T88"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dn4-eb-WkT" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
