@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2925BF7228ABA83C00EEF7A1 /* APIRequest+Multipart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2925BF7128ABA83C00EEF7A1 /* APIRequest+Multipart.swift */; };
 		29376B9F28AB923500E770C3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 29376B7D28AB923500E770C3 /* Assets.xcassets */; };
 		29376BA128AB923500E770C3 /* APIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29376B8128AB923500E770C3 /* APIError.swift */; };
 		29376BA228AB923500E770C3 /* APIRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29376B8228AB923500E770C3 /* APIRouter.swift */; };
@@ -29,9 +30,12 @@
 		29376BB328AB923500E770C3 /* MetalBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29376B9C28AB923500E770C3 /* MetalBuffer.swift */; };
 		29376BB428AB923500E770C3 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29376B9D28AB923500E770C3 /* AppDelegate.swift */; };
 		29376BB528AB923500E770C3 /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29376B9E28AB923500E770C3 /* Renderer.swift */; };
+		2991381828BF0C3E00C67A86 /* DisplayResultController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2991381728BF0C3E00C67A86 /* DisplayResultController.swift */; };
+		2991381A28BF5AE500C67A86 /* nguyen_foot.ply in Resources */ = {isa = PBXBuildFile; fileRef = 2991381928BF5AE500C67A86 /* nguyen_foot.ply */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		2925BF7128ABA83C00EEF7A1 /* APIRequest+Multipart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "APIRequest+Multipart.swift"; sourceTree = "<group>"; };
 		29376B7D28AB923500E770C3 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		29376B7E28AB923500E770C3 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		29376B8128AB923500E770C3 /* APIError.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = APIError.swift; sourceTree = "<group>"; };
@@ -57,6 +61,8 @@
 		29376B9C28AB923500E770C3 /* MetalBuffer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MetalBuffer.swift; sourceTree = "<group>"; };
 		29376B9D28AB923500E770C3 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		29376B9E28AB923500E770C3 /* Renderer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Renderer.swift; sourceTree = "<group>"; };
+		2991381728BF0C3E00C67A86 /* DisplayResultController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayResultController.swift; sourceTree = "<group>"; };
+		2991381928BF5AE500C67A86 /* nguyen_foot.ply */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = nguyen_foot.ply; sourceTree = "<group>"; };
 		948146554F46E56B015690CC /* SampleCode.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = SampleCode.xcconfig; path = Configuration/SampleCode.xcconfig; sourceTree = "<group>"; };
 		B57D60B9736905755DECF7CE /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		E73DD12D24636FEF00D77039 /* TPS Lidar Demo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "TPS Lidar Demo.app"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -77,6 +83,7 @@
 		29376B7B28AB923500E770C3 /* TpsLidarDemo */ = {
 			isa = PBXGroup;
 			children = (
+				2991381928BF5AE500C67A86 /* nguyen_foot.ply */,
 				29376B8D28AB923500E770C3 /* Applications */,
 				29376B8928AB923500E770C3 /* Common */,
 				29376B8428AB923500E770C3 /* Extensions */,
@@ -110,6 +117,7 @@
 				29376B8128AB923500E770C3 /* APIError.swift */,
 				29376B8228AB923500E770C3 /* APIRouter.swift */,
 				29376B8328AB923500E770C3 /* APIRequest.swift */,
+				2925BF7128ABA83C00EEF7A1 /* APIRequest+Multipart.swift */,
 			);
 			path = Networking;
 			sourceTree = "<group>";
@@ -166,6 +174,7 @@
 				29376B9C28AB923500E770C3 /* MetalBuffer.swift */,
 				29376B9D28AB923500E770C3 /* AppDelegate.swift */,
 				29376B9E28AB923500E770C3 /* Renderer.swift */,
+				2991381728BF0C3E00C67A86 /* DisplayResultController.swift */,
 			);
 			path = Applications;
 			sourceTree = "<group>";
@@ -266,6 +275,7 @@
 				29376BAF28AB923500E770C3 /* LaunchScreen.storyboard in Resources */,
 				29376B9F28AB923500E770C3 /* Assets.xcassets in Resources */,
 				29376BB028AB923500E770C3 /* Main.storyboard in Resources */,
+				2991381A28BF5AE500C67A86 /* nguyen_foot.ply in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -281,6 +291,7 @@
 				29376BB328AB923500E770C3 /* MetalBuffer.swift in Sources */,
 				29376BAA28AB923500E770C3 /* XError.swift in Sources */,
 				29376BAD28AB923500E770C3 /* Shaders.metal in Sources */,
+				2991381828BF0C3E00C67A86 /* DisplayResultController.swift in Sources */,
 				29376BA528AB923500E770C3 /* APIPath.swift in Sources */,
 				29376BA728AB923500E770C3 /* Configuration.swift in Sources */,
 				29376BAB28AB923500E770C3 /* SaveController.swift in Sources */,
@@ -289,6 +300,7 @@
 				29376BA628AB923500E770C3 /* Reachability.swift in Sources */,
 				29376BAE28AB923500E770C3 /* MainController.swift in Sources */,
 				29376BB528AB923500E770C3 /* Renderer.swift in Sources */,
+				2925BF7228ABA83C00EEF7A1 /* APIRequest+Multipart.swift in Sources */,
 				29376BB428AB923500E770C3 /* AppDelegate.swift in Sources */,
 				29376BAC28AB923500E770C3 /* Helpers.swift in Sources */,
 				29376BA128AB923500E770C3 /* APIError.swift in Sources */,

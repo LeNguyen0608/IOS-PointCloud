@@ -31,6 +31,7 @@ protocol URLRequestConvertible {
 
 struct APIRouter: URLRequestConvertible {
     static var baseURL: String {
+        return ""
         return "https://planning-poker.kardsys.com"
     }
 

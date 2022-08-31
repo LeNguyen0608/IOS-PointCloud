@@ -19,15 +19,15 @@ final class Renderer {
     // Maximum number of points we store in the point cloud
     private let maxPoints = 15_000_000
     // Number of sample points on the grid
-    var numGridPoints = 2_000
+    var numGridPoints = 500
     // Particle's size in pixels
     private let particleSize: Float = 8
     // We only use portrait orientation in this app
     private let orientation = UIInterfaceOrientation.portrait
     // Camera's threshold values for detecting when the camera moves so that we can accumulate the points
     // set to 0 for continous sampling
-    private let cameraRotationThreshold = cos(0 * .degreesToRadian)
-    private let cameraTranslationThreshold: Float = pow(0.00, 2)   // (meter-squared)
+    private let cameraRotationThreshold = cos(15 * .degreesToRadian)
+    private let cameraTranslationThreshold: Float = pow(3, 2)   // (meter-squared)
     // The max number of command buffers in flight
     private let maxInFlightBuffers = 5
     
@@ -91,6 +91,7 @@ final class Renderer {
     private lazy var cameraResolution = Float2(Float(sampleFrame.camera.imageResolution.width), Float(sampleFrame.camera.imageResolution.height))
     private lazy var viewToCamera = sampleFrame.displayTransform(for: orientation, viewportSize: viewportSize).inverted()
     private lazy var lastCameraTransform = sampleFrame.camera.transform
+    private var firstPointCompairasion: Float?
     
     // interfaces
     var confidenceThreshold = 2
@@ -106,6 +107,7 @@ final class Renderer {
         self.session = session
         self.device = device
         self.renderDestination = renderDestination
+        self.firstPointCompairasion = nil
         library = device.makeDefaultLibrary()!
   
         commandQueue = device.makeCommandQueue()!
@@ -129,6 +131,115 @@ final class Renderer {
         self.loadSavedClouds()
     }
     
+//    func test() {
+//        print("Saving is executing...")
+//
+//        guard let frame = session.currentFrame
+//        else { fatalError("Can't get ARFrame") }
+//
+//        guard let device = MTLCreateSystemDefaultDevice()
+//        else { fatalError("Can't create MTLDevice") }
+//
+//        let allocator = MTKMeshBufferAllocator(device: device)
+//        let asset = MDLAsset(bufferAllocator: allocator)
+//        let meshAnchors = frame.anchors.compactMap { $0 as? ARMeshAnchor }
+//
+//        for ma in meshAnchors {
+//            let geometry = ma.geometry
+//            let vertices = geometry.vertices
+//            let faces = geometry.faces
+//            let vertexPointer = vertices.buffer.contents()
+//            let facePointer = faces.buffer.contents()
+//
+//            for vtxIndex in 0 ..< vertices.count {
+//
+//                let vertex = geometry.vertex(at: UInt32(vtxIndex))
+//                var vertexLocalTransform = matrix_identity_float4x4
+//
+//                vertexLocalTransform.columns.3 = SIMD4<Float>(x: vertex.0,
+//                                                              y: vertex.1,
+//                                                              z: vertex.2,
+//                                                              w: 1.0)
+//
+//                let vertexWorldTransform = (ma.transform * vertexLocalTransform).position
+//                let vertexOffset = vertices.offset + vertices.stride * vtxIndex
+//                let componentStride = vertices.stride / 3
+//
+//                vertexPointer.storeBytes(of: vertexWorldTransform.x,
+//                                         toByteOffset: vertexOffset,
+//                                         as: Float.self)
+//
+//                vertexPointer.storeBytes(of: vertexWorldTransform.y,
+//                                         toByteOffset: vertexOffset + componentStride,
+//                                         as: Float.self)
+//
+//                vertexPointer.storeBytes(of: vertexWorldTransform.z,
+//                                         toByteOffset: vertexOffset + (2 * componentStride),
+//                                         as: Float.self)
+//            }
+//
+//            let byteCountVertices = vertices.count * vertices.stride
+//            let byteCountFaces = faces.count * faces.indexCountPerPrimitive * faces.bytesPerIndex
+//
+//            let vertexBuffer = allocator.newBuffer(with: Data(bytesNoCopy: vertexPointer,
+//                                                              count: byteCountVertices,
+//                                                              deallocator: .none), type: .vertex)
+//
+//            let indexBuffer = allocator.newBuffer(with: Data(bytesNoCopy: facePointer,
+//                                                             count: byteCountFaces,
+//                                                             deallocator: .none), type: .index)
+//
+//            let indexCount = faces.count * faces.indexCountPerPrimitive
+//            let material = MDLMaterial(name: "material",
+//                                       scatteringFunction: MDLPhysicallyPlausibleScatteringFunction())
+//
+//            let submesh = MDLSubmesh(indexBuffer: indexBuffer,
+//                                     indexCount: indexCount,
+//                                     indexType: .uInt32,
+//                                     geometryType: .triangles,
+//                                     material: material)
+//
+//            let vertexFormat = MTKModelIOVertexFormatFromMetal(vertices.format)
+//
+//            let vertexDescriptor = MDLVertexDescriptor()
+//
+//            vertexDescriptor.attributes[0] = MDLVertexAttribute(name: MDLVertexAttributePosition,
+//                                                                format: vertexFormat,
+//                                                                offset: 0,
+//                                                                bufferIndex: 0)
+//
+//            vertexDescriptor.layouts[0] = MDLVertexBufferLayout(stride: ma.geometry.vertices.stride)
+//
+//            let mesh = MDLMesh(vertexBuffer: vertexBuffer,
+//                               vertexCount: ma.geometry.vertices.count,
+//                               descriptor: vertexDescriptor,
+//                               submeshes: [submesh])
+//
+//            asset.add(mesh)
+//        }
+//
+//        let filePath = FileManager.default.urls(for: .documentDirectory,
+//                                                in: .userDomainMask).first!
+//
+//        let usd: URL = filePath.appendingPathComponent("model.usd")
+//
+//        if MDLAsset.canExportFileExtension("usd") {
+//            do {
+//                try asset.export(to: usd)
+//
+//                let controller = UIActivityViewController(activityItems: [usd],
+//                                                          applicationActivities: nil)
+//                controller.popoverPresentationController?.sourceView = sender
+//                self.present(controller, animated: true, completion: nil)
+//
+//            } catch let error {
+//                fatalError(error.localizedDescription)
+//            }
+//        } else {
+//            fatalError("Can't export USD")
+//        }
+//    }
+//
     func drawRectResized(size: CGSize) {
         viewportSize = size
     }
@@ -187,7 +298,7 @@ final class Renderer {
         update(frame: currentFrame)
         updateCapturedImageTextures(frame: currentFrame)
         
-        // handle buffer rotating
+        // handle buffer rotating			
         currentBufferIndex = (currentBufferIndex + 1) % maxInFlightBuffers
         pointCloudUniformsBuffers[currentBufferIndex][0] = pointCloudUniforms
         
@@ -249,12 +360,27 @@ final class Renderer {
                 let position = self.particlesBuffer[i].position
                 let color = self.particlesBuffer[i].color
                 let confidence = self.particlesBuffer[i].confidence
-                if confidence == 2 { self.highConfCount += 1 }
-                self.cpuParticlesBuffer.append(
-                    CPUParticle(position: position,
-                                color: color,
-                                confidence: confidence))
+                
+                
+                if (self.firstPointCompairasion == nil) {
+                    if confidence == 2 { self.highConfCount += 1 }
+                    self.firstPointCompairasion = position.y
+                    self.cpuParticlesBuffer.append(
+                        CPUParticle(position: position,
+                                    color: color,
+                                    confidence: confidence))
+//                    i += 1
+                } else if (abs(abs(self.firstPointCompairasion ?? 0) - abs(position.y)) < 0.005) {
+                    if confidence == 2 { self.highConfCount += 1 }
+                    self.cpuParticlesBuffer.append(
+                        CPUParticle(position: position,
+                                    color: color,
+                                    confidence: confidence))
+//                    i += 1
+                }
+                
                 i += 1
+                
             }
         }
         
@@ -328,6 +454,7 @@ extension Renderer {
         cpuParticlesBuffer = [CPUParticle]()
         rgbUniformsBuffers = [MetalBuffer<RGBUniforms>]()
         pointCloudUniformsBuffers = [MetalBuffer<PointCloudUniforms>]()
+        firstPointCompairasion = nil
         
         commandQueue = device.makeCommandQueue()!
         for _ in 0 ..< maxInFlightBuffers {

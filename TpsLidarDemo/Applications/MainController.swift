@@ -213,11 +213,12 @@ extension MainController {
     }
     
     func export(url: URL) -> Void {
-        present(
-            UIActivityViewController(
-                activityItems: [url as Any],
-                applicationActivities: .none),
-            animated: true)
+//        present(
+//            UIActivityViewController(
+//                activityItems: [url as Any],
+//                applicationActivities: .none),
+//            animated: true)\
+        testCallAPI(url)
     }
     
     func afterSave() -> Void {
@@ -234,6 +235,39 @@ extension MainController {
         let saveContoller = SaveController()
         saveContoller.mainController = self
         present(saveContoller, animated: true, completion: nil)
+    }
+    
+    func testCallAPI(_ url: URL) {
+//        let plyFileData = (try? Data(contentsOf: url)) ?? Data()
+//        let multipartDatas : [MultipartData] = [
+//            MultipartDataFile(key: "file", fileName: "test.ply", payload: plyFileData, mineType: "application/ply"),
+//        ]
+//
+//        let router = APIRouter(path: "http://192.168.20.190/api/upload-file",
+//                               method: .post,
+//                               parameters: [:],
+//                               contentType: .multipartFormData)
+//        APIRequest.shared.requestUploadMultipart(router: router, multipartDatas: multipartDatas) { error, response in
+//            let storyBoard: UIStoryboard = UIStoryboard(name: "Main", bundle: nil)
+//            let displayResultController = storyBoard.instantiateViewController(withIdentifier: "displayResult") as! DisplayResultController
+//            self.present(displayResultController, animated: true, completion: nil)
+//        }
+//
+        guard let path = Bundle.main.path(forResource: "nguyen_foot", ofType: "ply") else {return}
+        if  let txt = FileManager.default.contents(atPath: path) {
+            print(String(data: txt, encoding: .utf8) ?? "")
+        }
+                
+            let parameters = [
+              [
+                "key": "file",
+                "src": path,
+                "type": "file"
+              ]] as [[String : Any]]
+        
+        APIRequest.shared.sendAPI(parameters: parameters)
+        
+//        APIRequest.shared.aa(url)
     }
     
     func goToExportView() -> Void {
