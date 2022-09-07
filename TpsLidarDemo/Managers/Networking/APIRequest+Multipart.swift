@@ -122,7 +122,7 @@ extension APIRequest {
         body += "--\(boundary)--\r\n";
         let postData = body.data(using: .ascii)
         
-        var request = URLRequest(url: URL(string: "http://192.168.20.190/api/upload-file")!,timeoutInterval: Double.infinity)
+        var request = URLRequest(url: URL(string: "http://113.161.39.34:8088/api/upload-file")!,timeoutInterval: Double.infinity)
         request.addValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
         
         request.httpMethod = "POST"

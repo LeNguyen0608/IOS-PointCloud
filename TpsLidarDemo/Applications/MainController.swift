@@ -48,13 +48,13 @@ final class MainController: UIViewController, ARSessionDelegate {
             tintColor: .white, hidden: !isUIEnabled)
         view.addSubview(showSceneButton)
         
-        toggleParticlesButton = createButton(mainView: self, iconName: "circle.grid.hex.fill",
-            tintColor: .white, hidden: !isUIEnabled)
-        view.addSubview(toggleParticlesButton)
+//        toggleParticlesButton = createButton(mainView: self, iconName: "circle.grid.hex.fill",
+//            tintColor: .white, hidden: !isUIEnabled)
+//        view.addSubview(toggleParticlesButton)
         
-        rgbButton = createButton(mainView: self, iconName: "eye",
-            tintColor: .white, hidden: !isUIEnabled)
-        view.addSubview(rgbButton)
+//        rgbButton = createButton(mainView: self, iconName: "eye",
+//            tintColor: .white, hidden: !isUIEnabled)
+//        view.addSubview(rgbButton)
         
         NSLayoutConstraint.activate([
             clearButton.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 50),
@@ -72,15 +72,15 @@ final class MainController: UIViewController, ARSessionDelegate {
             showSceneButton.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -50),
             showSceneButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             
-            toggleParticlesButton.widthAnchor.constraint(equalToConstant: 50),
-            toggleParticlesButton.heightAnchor.constraint(equalToConstant: 50),
-            toggleParticlesButton.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 50),
-            toggleParticlesButton.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -50),
+//            toggleParticlesButton.widthAnchor.constraint(equalToConstant: 50),
+//            toggleParticlesButton.heightAnchor.constraint(equalToConstant: 50),
+//            toggleParticlesButton.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 50),
+//            toggleParticlesButton.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -50),
             
-            rgbButton.rightAnchor.constraint(equalTo: view.rightAnchor, constant: -50),
-            rgbButton.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -50),
-            rgbButton.widthAnchor.constraint(equalToConstant: 60),
-            rgbButton.heightAnchor.constraint(equalToConstant: 50)
+//            rgbButton.rightAnchor.constraint(equalTo: view.rightAnchor, constant: -50),
+//            rgbButton.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -50),
+//            rgbButton.widthAnchor.constraint(equalToConstant: 60),
+//            rgbButton.heightAnchor.constraint(equalToConstant: 50)
         ])
     }
     
@@ -105,10 +105,10 @@ final class MainController: UIViewController, ARSessionDelegate {
         case confidenceControl:
             renderer.confidenceThreshold = confidenceControl.selectedSegmentIndex
             
-        case rgbButton:
-            renderer.rgbOn = !renderer.rgbOn
-            let iconName = renderer.rgbOn ? "eye.slash": "eye"
-            rgbButton.setBackgroundImage(.init(systemName: iconName), for: .normal)
+//        case rgbButton:
+//            renderer.rgbOn = !renderer.rgbOn
+//            let iconName = renderer.rgbOn ? "eye.slash": "eye"
+//            rgbButton.setBackgroundImage(.init(systemName: iconName), for: .normal)
             
         case clearButton:
             renderer.isInViewSceneMode = true
@@ -124,20 +124,20 @@ final class MainController: UIViewController, ARSessionDelegate {
             renderer.isInViewSceneMode = !renderer.isInViewSceneMode
             if !renderer.isInViewSceneMode {
                 renderer.showParticles = true
-                self.toggleParticlesButton.setBackgroundImage(.init(systemName: "circle.grid.hex.fill"), for: .normal)
+//                self.toggleParticlesButton.setBackgroundImage(.init(systemName: "circle.grid.hex.fill"), for: .normal)
                 self.setShowSceneButtonStyle(isScanning: true)
             } else {
                 self.setShowSceneButtonStyle(isScanning: false)
             }
             
-        case toggleParticlesButton:
-            renderer.showParticles = !renderer.showParticles
-            if (!renderer.showParticles) {
-                renderer.isInViewSceneMode = true
-                self.setShowSceneButtonStyle(isScanning: false)
-            }
-            let iconName = "circle.grid.hex" + (renderer.showParticles ? ".fill" : "")
-            self.toggleParticlesButton.setBackgroundImage(.init(systemName: iconName), for: .normal)
+//        case toggleParticlesButton:
+//            renderer.showParticles = !renderer.showParticles
+//            if (!renderer.showParticles) {
+//                renderer.isInViewSceneMode = true
+//                self.setShowSceneButtonStyle(isScanning: false)
+//            }
+//            let iconName = "circle.grid.hex" + (renderer.showParticles ? ".fill" : "")
+//            self.toggleParticlesButton.setBackgroundImage(.init(systemName: iconName), for: .normal)
             
         default:
             break
@@ -213,12 +213,21 @@ extension MainController {
     }
     
     func export(url: URL) -> Void {
-//        present(
-//            UIActivityViewController(
-//                activityItems: [url as Any],
-//                applicationActivities: .none),
-//            animated: true)\
-        testCallAPI(url)
+        present(
+            UIActivityViewController(
+                activityItems: [url as Any],
+                applicationActivities: .none),
+            animated: true)
+    }
+    
+    func measurement() -> Void {
+        let err = renderer.savingError
+        if err == nil {
+            return  testCallAPI(renderer.savedCloudURLs.last!)
+        }
+        try? FileManager.default.removeItem(at: renderer.savedCloudURLs.last!)
+        renderer.savedCloudURLs.removeLast()
+        onSaveError(error: err!)
     }
     
     func afterSave() -> Void {
@@ -252,7 +261,12 @@ extension MainController {
 //            let displayResultController = storyBoard.instantiateViewController(withIdentifier: "displayResult") as! DisplayResultController
 //            self.present(displayResultController, animated: true, completion: nil)
 //        }
-//        
+//
+        
+        guard let path = Bundle.main.path(forResource: "nguyen_foot", ofType: "ply") else {
+            return
+        }
+
         if  let txt = FileManager.default.contents(atPath: url.path) {
             print(String(data: txt, encoding: .utf8) ?? "")
         }
@@ -284,7 +298,8 @@ extension MainController {
         var title: String
         switch error {
             case .alreadySavingFile: title = "Save in Progress Please Wait."
-            case .noScanDone: title = "No scan to Save."
+            case .noScanDone: title = "No scan to Process."
+            case .noScanMeasure: title = "No scan to Measure."
             case.savingFailed: title = "Failed To Write File."
         }
         

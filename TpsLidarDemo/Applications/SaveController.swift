@@ -13,8 +13,10 @@ class SaveController : UIViewController, UIPickerViewDelegate, UIPickerViewDataS
     private let formatPicker = UIPickerView()
     private let spinner = UIActivityIndicatorView(style: .large)
     private let saveCurrentButton = UIButton(type: .system)
+    private let measurementCurrentButton = UIButton(type: .system)
     private let goToExportViewButton = UIButton(type: .system)
     private let saveCurrentScanLabel = UILabel()
+    private let subTitleLabel = UILabel()
     private let fileTypeWarning = UILabel()
     private let fileNameInput = UITextField()
     var mainController: MainController!
@@ -28,14 +30,16 @@ class SaveController : UIViewController, UIPickerViewDelegate, UIPickerViewDataS
         fileTypeWarning.textColor = .white
         view.addSubview(fileTypeWarning)
         
-        mainImage.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(mainImage)
+//        mainImage.translatesAutoresizingMaskIntoConstraints = false
+//        mainImage.contentMode = .scaleAspectFit
+//        mainImage.backgroundColor = .brown
+//        view.addSubview(mainImage)
         
-        formatPicker.delegate = self
-        formatPicker.dataSource = self
-        formatPicker.translatesAutoresizingMaskIntoConstraints =  false
-        formatPicker.delegate?.pickerView?(formatPicker, didSelectRow: 0, inComponent: 0)
-        view.addSubview(formatPicker)
+//        formatPicker.delegate = self
+//        formatPicker.dataSource = self
+//        formatPicker.translatesAutoresizingMaskIntoConstraints =  false
+//        formatPicker.delegate?.pickerView?(formatPicker, didSelectRow: 0, inComponent: 0)
+//        view.addSubview(formatPicker)
         
         fileNameInput.delegate = self
         fileNameInput.isUserInteractionEnabled = true
@@ -47,48 +51,68 @@ class SaveController : UIViewController, UIPickerViewDelegate, UIPickerViewDataS
         fileNameInput.backgroundColor = .systemBackground
         view.addSubview(fileNameInput)
         
-        saveCurrentScanLabel.text = "Current Scan: \(mainController.renderer.highConfCount) points"
+//        saveCurrentScanLabel.text = "Current Scan: \(mainController.renderer.highConfCount) points"
+        saveCurrentScanLabel.text = "MENU"
         saveCurrentScanLabel.translatesAutoresizingMaskIntoConstraints = false
-        saveCurrentScanLabel.textColor = .white
+        saveCurrentScanLabel.textColor = .black
+        saveCurrentScanLabel.font = .boldSystemFont(ofSize: 25)
         view.addSubview(saveCurrentScanLabel)
+        
+        subTitleLabel.text = "Please choose the option you want to"
+        subTitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        subTitleLabel.textColor = .gray
+        subTitleLabel.font = .systemFont(ofSize: 20)
+        view.addSubview(subTitleLabel)
 
-        spinner.color = .white
+        spinner.color = .black
         spinner.backgroundColor = .clear
         spinner.hidesWhenStopped = true
         spinner.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(spinner)
         
-        saveCurrentButton.tintColor = .green
+        saveCurrentButton.tintColor = .brown
         saveCurrentButton.setTitle("Save Current Scan", for: .normal)
         saveCurrentButton.setImage(.init(systemName: "arrow.down.doc"), for: .normal)
         saveCurrentButton.translatesAutoresizingMaskIntoConstraints = false
         saveCurrentButton.addTarget(self, action: #selector(executeSave), for: .touchUpInside)
+        saveCurrentButton.titleLabel?.font = .systemFont(ofSize: 20)
         view.addSubview(saveCurrentButton)
         
-        goToExportViewButton.tintColor = .cyan
-        goToExportViewButton.setTitle("Previously Saved Scans", for: .normal)
-        goToExportViewButton.setImage(.init(systemName: "tray.full"), for: .normal)
-        goToExportViewButton.translatesAutoresizingMaskIntoConstraints = false
-        goToExportViewButton.addTarget(self, action: #selector(goToExportView), for: .touchUpInside)
-        view.addSubview(goToExportViewButton)
+        measurementCurrentButton.tintColor = .blue
+        measurementCurrentButton.setTitle("Measure Current Scan", for: .normal)
+        measurementCurrentButton.setImage(.init(systemName: "ruler"), for: .normal)
+        measurementCurrentButton.translatesAutoresizingMaskIntoConstraints = false
+        measurementCurrentButton.titleLabel?.font = .systemFont(ofSize: 20)
+        measurementCurrentButton.addTarget(self, action: #selector(executeMeasure), for: .touchUpInside)
+        view.addSubview(measurementCurrentButton)
+        
+//        goToExportViewButton.tintColor = .cyan
+//        goToExportViewButton.setTitle("Previously Saved Scans", for: .normal)
+//        goToExportViewButton.setImage(.init(systemName: "tray.full"), for: .normal)
+//        goToExportViewButton.translatesAutoresizingMaskIntoConstraints = false
+//        goToExportViewButton.addTarget(self, action: #selector(goToExportView), for: .touchUpInside)
+//        view.addSubview(goToExportViewButton)
         
         NSLayoutConstraint.activate([
-            formatPicker.heightAnchor.constraint(equalToConstant: 225),
-            formatPicker.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -200),
-            formatPicker.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+//            formatPicker.heightAnchor.constraint(equalToConstant: 225),
+//            formatPicker.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -200),
+//            formatPicker.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             
+            fileNameInput.topAnchor.constraint(equalTo: view.bottomAnchor, constant: 100),
             fileNameInput.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            fileNameInput.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             fileNameInput.widthAnchor.constraint(equalToConstant: 250),
             fileNameInput.heightAnchor.constraint(equalToConstant: 45),
             
-            mainImage.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -185),
-            mainImage.centerXAnchor.constraint(equalTo: view.centerXAnchor, constant: 20),
-            mainImage.widthAnchor.constraint(equalToConstant: 300),
-            mainImage.heightAnchor.constraint(equalToConstant: 300),
+//            mainImage.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -185),
+//            mainImage.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+//            mainImage.widthAnchor.constraint(equalToConstant: 300),
+//            mainImage.heightAnchor.constraint(equalToConstant: 300),
             
             saveCurrentScanLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            saveCurrentScanLabel.bottomAnchor.constraint(equalTo: view.topAnchor, constant: 50),
+            saveCurrentScanLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 60),
+            
+            subTitleLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            subTitleLabel.topAnchor.constraint(equalTo: saveCurrentScanLabel.bottomAnchor, constant: 10),
             
             spinner.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             spinner.centerYAnchor.constraint(equalTo: view.centerYAnchor, constant: -50),
@@ -96,13 +120,20 @@ class SaveController : UIViewController, UIPickerViewDelegate, UIPickerViewDataS
             fileTypeWarning.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             fileTypeWarning.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -120),
             
-            saveCurrentButton.widthAnchor.constraint(equalToConstant: 150),
-            saveCurrentButton.heightAnchor.constraint(equalToConstant: 50),
+            saveCurrentButton.widthAnchor.constraint(equalToConstant: 300),
+            saveCurrentButton.heightAnchor.constraint(equalToConstant: 70),
             saveCurrentButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            saveCurrentButton.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -165),
+            saveCurrentButton.topAnchor.constraint(equalTo: measurementCurrentButton.bottomAnchor, constant: 15),
             
-            goToExportViewButton.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -50),
-            goToExportViewButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+            measurementCurrentButton.widthAnchor.constraint(equalToConstant: 300),
+            measurementCurrentButton.heightAnchor.constraint(equalToConstant: 70),
+            measurementCurrentButton.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            measurementCurrentButton.topAnchor.constraint(equalTo: subTitleLabel.topAnchor, constant: 150),
+//            measurementCurrentButton.bottomAnchor.constraint(equalTo: view.topAnchor, constant: 50),
+            
+//            goToExportViewButton.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -50),
+//            goToExportViewButton.centerXAnchor.constraint(equalTo: view.centerXAnchor)
+            
         ])
     }
     
@@ -129,6 +160,8 @@ class SaveController : UIViewController, UIPickerViewDelegate, UIPickerViewDataS
     private func beforeSave() {
         goToExportViewButton.isEnabled = false
         saveCurrentButton.isEnabled = false
+        measurementCurrentButton.isEnabled = false
+        spinner.isHidden = false
         isModalInPresentation = true
     }
     
@@ -138,8 +171,10 @@ class SaveController : UIViewController, UIPickerViewDelegate, UIPickerViewDataS
     }
         
     @objc func executeSave() -> Void {
+        beforeSave()
+        
         let fileName = !fileNameInput.text!.isEmpty ? fileNameInput.text : "untitled"
-        let format = selectedFormat!
+        let format = "Ascii"
             .lowercased(with: .none)
             .split(separator: " ")
             .joined(separator: "_")
@@ -148,6 +183,23 @@ class SaveController : UIViewController, UIPickerViewDelegate, UIPickerViewDataS
             fileName: fileName!,
             beforeGlobalThread: [beforeSave, spinner.startAnimating],
             afterGlobalThread: [dismissModal, spinner.stopAnimating, mainController.afterSave],
+            errorCallback: onSaveError,
+            format: format)
+    }
+    
+    @objc func executeMeasure() -> Void {
+        beforeSave()
+        
+        let fileName = !fileNameInput.text!.isEmpty ? fileNameInput.text : "untitled"
+        let format = "Ascii"
+            .lowercased(with: .none)
+            .split(separator: " ")
+            .joined(separator: "_")
+        
+        mainController.renderer.saveAsPlyFile(
+            fileName: fileName!,
+            beforeGlobalThread: [beforeSave, spinner.startAnimating],
+            afterGlobalThread: [dismissModal, spinner.stopAnimating, mainController.measurement],
             errorCallback: onSaveError,
             format: format)
     }
