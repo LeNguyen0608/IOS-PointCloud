@@ -4,18 +4,22 @@ import MetalKit
 import ARKit
 
 final class MainController: UIViewController, ARSessionDelegate {
+    // MARK: - Properties
+    static let shared = MainController()
+    
     private let isUIEnabled = true
-    private var clearButton = UIButton(type: .system)
+//    private var clearButton = UIButton(type: .system)
     private let confidenceControl = UISegmentedControl(items: ["Low", "Medium", "High"])
     private var rgbButton = UIButton(type: .system)
     private var showSceneButton = UIButton(type: .system)
-    private var saveButton = UIButton(type: .system)
+//    private var saveButton = UIButton(type: .system)
     private var toggleParticlesButton = UIButton(type: .system)
     private let session = ARSession()
     private let appNameLabel = UILabel()
     private let instructionLabel = UILabel()
     private let cancelButton = UIButton(type: .system)
     private let nextButton = UIButton(type: .system)
+    private let spinner = UIActivityIndicatorView(style: .large)
     var renderer: Renderer!
     private  var isPasued = false
     
@@ -25,6 +29,8 @@ final class MainController: UIViewController, ARSessionDelegate {
             print("Metal is not supported on this device")
             return
         }
+        
+        self.navigationController?.setNavigationBarHidden(true, animated: false)
         
         session.delegate = self
         // Set the view to use the default device
@@ -39,6 +45,12 @@ final class MainController: UIViewController, ARSessionDelegate {
             renderer = Renderer(session: session, metalDevice: device, renderDestination: view)
             renderer.drawRectResized(size: view.bounds.size)
         }
+        
+        spinner.color = .white
+        spinner.backgroundColor = .clear
+        spinner.hidesWhenStopped = true
+        spinner.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(spinner)
         
         appNameLabel.text = "Foot Scanner"
         appNameLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -66,15 +78,16 @@ final class MainController: UIViewController, ARSessionDelegate {
         nextButton.addTarget(self, action: #selector(self.viewValueChanged), for: .touchUpInside)
         nextButton.titleLabel?.font = .systemFont(ofSize: 17)
         view.addSubview(nextButton)
+        nextButton.isHidden = true
         
-        clearButton = createButton(mainView: self, iconName: "trash.circle.fill",
-            tintColor: .red, hidden: !isUIEnabled)
-        view.addSubview(clearButton)
+//        clearButton = createButton(mainView: self, iconName: "trash.circle.fill",
+//            tintColor: .red, hidden: !isUIEnabled)
+//        view.addSubview(clearButton)
         
-        saveButton = createButton(mainView: self, iconName: "filemenu.and.selection",
-            tintColor: .white, hidden: !isUIEnabled)
-        view.addSubview(saveButton)
-        
+//        saveButton = createButton(mainView: self, iconName: "filemenu.and.selection",
+//            tintColor: .white, hidden: !isUIEnabled)
+//        view.addSubview(saveButton)
+//
         showSceneButton = createButton(mainView: self, iconName: "record.circle",
             tintColor: .red, hidden: !isUIEnabled)
         view.addSubview(showSceneButton)
@@ -88,6 +101,9 @@ final class MainController: UIViewController, ARSessionDelegate {
 //        view.addSubview(rgbButton)
         
         NSLayoutConstraint.activate([
+            spinner.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            spinner.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            
             appNameLabel.topAnchor.constraint(equalTo: view.topAnchor, constant: 50),
             appNameLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             
@@ -100,15 +116,15 @@ final class MainController: UIViewController, ARSessionDelegate {
             nextButton.rightAnchor.constraint(equalTo: view.rightAnchor, constant: -10),
             nextButton.topAnchor.constraint(equalTo: view.topAnchor, constant: 50),
             
-            clearButton.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 50),
-            clearButton.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -55),
-            clearButton.widthAnchor.constraint(equalToConstant: 50),
-            clearButton.heightAnchor.constraint(equalToConstant: 50),
+//            clearButton.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 50),
+//            clearButton.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -55),
+//            clearButton.widthAnchor.constraint(equalToConstant: 50),
+//            clearButton.heightAnchor.constraint(equalToConstant: 50),
             
-            saveButton.widthAnchor.constraint(equalToConstant: 50),
-            saveButton.heightAnchor.constraint(equalToConstant: 50),
-            saveButton.rightAnchor.constraint(equalTo: view.rightAnchor, constant: -50),
-            saveButton.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -55),
+//            saveButton.widthAnchor.constraint(equalToConstant: 50),
+//            saveButton.heightAnchor.constraint(equalToConstant: 50),
+//            saveButton.rightAnchor.constraint(equalTo: view.rightAnchor, constant: -50),
+//            saveButton.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -55),
             
             showSceneButton.widthAnchor.constraint(equalToConstant: 60),
             showSceneButton.heightAnchor.constraint(equalToConstant: 60),
@@ -153,21 +169,21 @@ final class MainController: UIViewController, ARSessionDelegate {
 //            let iconName = renderer.rgbOn ? "eye.slash": "eye"
 //            rgbButton.setBackgroundImage(.init(systemName: iconName), for: .normal)
             
-        case clearButton:
-            renderer.isInViewSceneMode = true
-            setShowSceneButtonStyle(isScanning: false)
-            renderer.clearParticles()
+//        case clearButton:
+//            renderer.isInViewSceneMode = true
+//            setShowSceneButtonStyle(isScanning: false)
+//            renderer.clearParticles()
             
         case cancelButton:
-            cancelButton.isHidden = true
-            renderer.isInViewSceneMode = true
-            setShowSceneButtonStyle(isScanning: false)
-            renderer.clearParticles()
+            showConfirmAlertWithDistructiveButton()
+        
+        case nextButton:
+            showMenuActionSheet(controller: self)
             
-        case saveButton:
-            renderer.isInViewSceneMode = true
-            setShowSceneButtonStyle(isScanning: false)
-            goToSaveCurrentScanView()
+//        case saveButton:
+//            renderer.isInViewSceneMode = true
+//            setShowSceneButtonStyle(isScanning: false)
+//            goToSaveCurrentScanView()
         
         case showSceneButton:
             renderer.isInViewSceneMode = !renderer.isInViewSceneMode
@@ -181,8 +197,10 @@ final class MainController: UIViewController, ARSessionDelegate {
             
             if self.renderer.cpuParticlesBuffer.isEmpty {
                 cancelButton.isHidden = true
+                nextButton.isHidden = true
             } else {
                 cancelButton.isHidden = false
+                nextButton.isHidden = false
             }
             
 //        case toggleParticlesButton:
@@ -209,6 +227,15 @@ final class MainController: UIViewController, ARSessionDelegate {
         return true
     }
     
+    func scanAgain() {
+        cancelButton.isHidden = true
+        renderer.isInViewSceneMode = true
+        setShowSceneButtonStyle(isScanning: false)
+        nextButton.isHidden = true
+        instructionLabel.text = "Tap on record button to start"
+        renderer.clearParticles()
+    }
+    
     func session(_ session: ARSession, didFailWithError error: Error) {
         // Present an error message to the user.
         guard error is ARError else { return }
@@ -230,6 +257,110 @@ final class MainController: UIViewController, ARSessionDelegate {
             }
             alertController.addAction(restartAction)
             self.present(alertController, animated: true, completion: nil)
+        }
+    }
+    
+    func showMenuActionSheet(controller: UIViewController) {
+        let alert = UIAlertController(title: "", message: "Please choose the option", preferredStyle: .actionSheet)
+        
+//        var measureAction = UIAlertAction(title: "Measure Current Scan", style: .default, handler: { (_) in
+//            print("User click Approve button")
+//        })
+//        let img = UIImage(systemName: "tray.and.arrow.down")
+//        measureAction.setValue(img?.withRenderingMode(UIImage.RenderingMode.alwaysOriginal), forKey: "image")
+//        
+//        alert.addAction(measureAction)
+        alert.addAction(UIAlertAction(title: "Measure Current Scan", style: .default, handler: { (_) in
+            self.executeMeasure()
+        }))
+
+        alert.addAction(UIAlertAction(title: "Export Current Scan", style: .default, handler: { (_) in
+            self.executeSave()
+        }))
+       
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: { (_) in
+            print("User click Dismiss button")
+        }))
+
+        present(alert, animated: true, completion: {
+            print("completion block")
+        })
+    }
+    
+    func showConfirmAlertWithDistructiveButton() {
+        let alert = UIAlertController(title: "", message: "Are you sure you want to delete your current scan?", preferredStyle: UIAlertController.Style.alert)
+
+        alert.addAction(UIAlertAction(title: "Cancel", style: UIAlertAction.Style.default, handler: { _ in
+            //Cancel Action
+        }))
+        alert.addAction(UIAlertAction(title: "Delete",
+                                      style: UIAlertAction.Style.destructive,
+                                      handler: {(_: UIAlertAction!) in
+            self.scanAgain()
+        }))
+        self.present(alert, animated: true, completion: nil)
+    }
+    
+//    func onSaveError(error: XError) {
+//        dismissModal()
+//        self.onSaveError(error: error)
+//    }
+        
+    func dismissModal() { self.dismiss(animated: true, completion: nil) }
+    
+    private func beforeSave() {
+        isModalInPresentation = true
+        spinner.isHidden = false
+    }
+
+    
+//    @objc func goToExportView() -> Void {
+//        dismissModal()
+//        self.goToExportView()
+//    }
+        
+    @objc func executeSave() -> Void {
+        beforeSave()
+        spinner.startAnimating()
+        cancelButton.isEnabled = false
+        nextButton.isEnabled = false
+        showSceneButton.isEnabled = false
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            let format = "Ascii"
+                .lowercased(with: .none)
+                .split(separator: " ")
+                .joined(separator: "_")
+
+            self.renderer.saveAsPlyFile(
+                fileName: "untitled",
+                beforeGlobalThread: [],
+                afterGlobalThread: [self.dismissModal,self.afterSave],
+                errorCallback: self.onSaveError,
+                format: format)
+        }
+    }
+    
+    @objc func executeMeasure() -> Void {
+        beforeSave()
+        spinner.startAnimating()
+        cancelButton.isEnabled = false
+        nextButton.isEnabled = false
+        showSceneButton.isEnabled = false
+        
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            let format = "Ascii"
+                .lowercased(with: .none)
+                .split(separator: " ")
+                .joined(separator: "_")
+
+            self.renderer.saveAsPlyFile(
+                fileName: "untitled",
+                beforeGlobalThread: [],
+                afterGlobalThread: [self.measurement],
+                errorCallback: self.onSaveError,
+                format: format)
         }
     }
 }
@@ -256,20 +387,36 @@ extension MainController {
                 .init(systemName: "pause.circle"), for: .normal)
             self.showSceneButton.tintColor = .white
             self.instructionLabel.text = "Move phone around foot to scan"
+            self.nextButton.isHidden = true
         } else {
             self.showSceneButton.setBackgroundImage(
                 .init(systemName: "record.circle"), for: .normal)
             self.showSceneButton.tintColor = .red
-            self.instructionLabel.text = "Tap on record button to start"
+            
+            self.nextButton.isHidden = false
+            
+            if self.renderer.cpuParticlesBuffer.isEmpty {
+                self.instructionLabel.text = "Tap on record button to start"
+            } else {
+                self.instructionLabel.text = "Tap on record button to continue"
+            }
         }
     }
     
     func onSaveError(error: XError) {
+        self.spinner.stopAnimating()
+        self.cancelButton.isEnabled = true
+        self.nextButton.isEnabled = true
+        self.showSceneButton.isEnabled = true
         displayErrorMessage(error: error)
         renderer.savingError = nil
     }
     
     func export(url: URL) -> Void {
+        self.spinner.stopAnimating()
+        self.cancelButton.isEnabled = true
+        self.nextButton.isEnabled = true
+        self.showSceneButton.isEnabled = true
         present(
             UIActivityViewController(
                 activityItems: [url as Any],
@@ -324,7 +471,7 @@ extension MainController {
             return
         }
 
-        if  let txt = FileManager.default.contents(atPath: url.path) {
+        if  let txt = FileManager.default.contents(atPath: path) {
             print(String(data: txt, encoding: .utf8) ?? "")
         }
                 
@@ -336,12 +483,20 @@ extension MainController {
           ]] as [[String : Any]]
         
         APIRequest.shared.sendAPI(parameters: parameters) { data, width, height in
-            let storyBoard: UIStoryboard = UIStoryboard(name: "Main", bundle: nil)
-            let displayResultController = storyBoard.instantiateViewController(withIdentifier: "displayResult") as! DisplayResultController
-            displayResultController.imageBase64String = data
-            displayResultController.width = width
-            displayResultController.height = height
-            self.present(displayResultController, animated: true, completion: nil)
+            DispatchQueue.main.async {
+                self.spinner.stopAnimating()
+                self.cancelButton.isEnabled = true
+                self.nextButton.isEnabled = true
+                self.showSceneButton.isEnabled = true
+                let storyBoard: UIStoryboard = UIStoryboard(name: "Main", bundle: nil)
+                let displayResultController = storyBoard.instantiateViewController(withIdentifier: "displayResult") as! DisplayResultController
+                displayResultController.imageBase64String = data
+                displayResultController.width = width
+                displayResultController.height = height
+                displayResultController.mainController = self
+                self.navigationController?.pushViewController(displayResultController, animated: true)
+//                self.present(displayResultController, animated: true, completion: nil)
+            }
         }
     }
     

@@ -8,6 +8,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        Thread.sleep(forTimeInterval: 1.0)
+        
         if !ARWorldTrackingConfiguration.supportsFrameSemantics(.sceneDepth) {
             // Ensure that the device supports scene depth and present
             //  an error-message view controller, if not.
