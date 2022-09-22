@@ -3,7 +3,7 @@ import Metal
 import MetalKit
 import ARKit
 
-final class MainController: UIViewController, ARSessionDelegate {
+final class MainController: UIViewController, ARSessionDelegate, CLLocationManagerDelegate {
     // MARK: - Properties
     static let shared = MainController()
     
@@ -15,6 +15,7 @@ final class MainController: UIViewController, ARSessionDelegate {
 //    private var saveButton = UIButton(type: .system)
     private var toggleParticlesButton = UIButton(type: .system)
     private let session = ARSession()
+    private let cllm = CLLocationManager()
     private let appNameLabel = UILabel()
     private let instructionLabel = UILabel()
     private let cancelButton = UIButton(type: .system)
@@ -33,6 +34,8 @@ final class MainController: UIViewController, ARSessionDelegate {
         self.navigationController?.setNavigationBarHidden(true, animated: false)
         
         session.delegate = self
+        cllm.delegate = self
+        cllm.startUpdatingHeading()
         // Set the view to use the default device
         if let view = view as? MTKView {
             view.device = device
@@ -150,6 +153,7 @@ final class MainController: UIViewController, ARSessionDelegate {
         // Create a world-tracking configuration, and
         // enable the scene depth frame-semantic.
         let configuration = ARWorldTrackingConfiguration()
+        configuration.worldAlignment = .gravityAndHeading
         configuration.frameSemantics = [.sceneDepth, .smoothedSceneDepth]
         // Run the view's session
         session.run(configuration)
@@ -186,21 +190,33 @@ final class MainController: UIViewController, ARSessionDelegate {
 //            goToSaveCurrentScanView()
         
         case showSceneButton:
-            renderer.isInViewSceneMode = !renderer.isInViewSceneMode
-            if !renderer.isInViewSceneMode {
-                renderer.showParticles = true
-//                self.toggleParticlesButton.setBackgroundImage(.init(systemName: "circle.grid.hex.fill"), for: .normal)
-                self.setShowSceneButtonStyle(isScanning: true)
-            } else {
-                self.setShowSceneButtonStyle(isScanning: false)
+            var when = 0.0
+            
+            if let configuration = session.configuration as? ARWorldTrackingConfiguration, self.renderer.cpuParticlesBuffer.isEmpty {
+                when = 1.75
+                session.run(configuration,
+                            options: [.resetTracking, .removeExistingAnchors])
+                renderer.magneticHeading = cllm.heading?.magneticHeading
             }
             
-            if self.renderer.cpuParticlesBuffer.isEmpty {
-                cancelButton.isHidden = true
-                nextButton.isHidden = true
-            } else {
-                cancelButton.isHidden = false
-                nextButton.isHidden = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + when) { [self] in
+                renderer.isInViewSceneMode = !renderer.isInViewSceneMode
+                
+                if !renderer.isInViewSceneMode {
+                    renderer.showParticles = true
+    //                self.toggleParticlesButton.setBackgroundImage(.init(systemName: "circle.grid.hex.fill"), for: .normal)
+                    self.setShowSceneButtonStyle(isScanning: true)
+                } else {
+                    self.setShowSceneButtonStyle(isScanning: false)
+                }
+                
+                if self.renderer.cpuParticlesBuffer.isEmpty {
+                    cancelButton.isHidden = true
+                    nextButton.isHidden = true
+                } else {
+                    cancelButton.isHidden = false
+                    nextButton.isHidden = false
+                }
             }
             
 //        case toggleParticlesButton:
@@ -217,6 +233,10 @@ final class MainController: UIViewController, ARSessionDelegate {
         }
     }
     
+    override func didReceiveMemoryWarning() {
+        super.didReceiveMemoryWarning()
+    }
+    
     // Auto-hide the home indicator to maximize immersion in AR experiences.
     override var prefersHomeIndicatorAutoHidden: Bool {
         return true
@@ -225,6 +245,10 @@ final class MainController: UIViewController, ARSessionDelegate {
     // Hide the status bar to maximize immersion in AR experiences.
     override var prefersStatusBarHidden: Bool {
         return true
+    }
+    
+    func locationManager(manager: CLLocationManager!, didUpdateHeading newHeading: CLHeading!) {
+        print(newHeading.magneticHeading)
     }
     
     func scanAgain() {
@@ -252,7 +276,7 @@ final class MainController: UIViewController, ARSessionDelegate {
             let restartAction = UIAlertAction(title: "Restart Session", style: .default) { _ in
                 alertController.dismiss(animated: true, completion: nil)
                 if let configuration = self.session.configuration {
-                    self.session.run(configuration, options: .resetSceneReconstruction)
+                    self.session.run(configuration, options: [.resetSceneReconstruction])
                 }
             }
             alertController.addAction(restartAction)
@@ -295,7 +319,7 @@ final class MainController: UIViewController, ARSessionDelegate {
         }))
         alert.addAction(UIAlertAction(title: "Delete",
                                       style: UIAlertAction.Style.destructive,
-                                      handler: {(_: UIAlertAction!) in
+                                      handler: { [self](_: UIAlertAction!) in
             self.scanAgain()
         }))
         self.present(alert, animated: true, completion: nil)
@@ -333,11 +357,12 @@ final class MainController: UIViewController, ARSessionDelegate {
                 .joined(separator: "_")
 
             self.renderer.saveAsPlyFile(
-                fileName: "untitled",
+                fileName: "foot_pointcloud",
                 beforeGlobalThread: [],
                 afterGlobalThread: [self.dismissModal,self.afterSave],
                 errorCallback: self.onSaveError,
-                format: format)
+                format: format,
+                for: "Exporting")
         }
     }
     
@@ -356,11 +381,12 @@ final class MainController: UIViewController, ARSessionDelegate {
                 .joined(separator: "_")
 
             self.renderer.saveAsPlyFile(
-                fileName: "untitled",
+                fileName: "measurement",
                 beforeGlobalThread: [],
                 afterGlobalThread: [self.measurement],
                 errorCallback: self.onSaveError,
-                format: format)
+                format: format,
+                for: "Measuring")
         }
     }
 }
@@ -471,7 +497,7 @@ extension MainController {
             return
         }
 
-        if  let txt = FileManager.default.contents(atPath: path) {
+        if  let txt = FileManager.default.contents(atPath: url.path) {
             print(String(data: txt, encoding: .utf8) ?? "")
         }
                 

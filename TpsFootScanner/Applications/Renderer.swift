@@ -11,15 +11,18 @@ import ARKit
 final class Renderer {
     var savedCloudURLs = [URL]()
     var cpuParticlesBuffer = [CPUParticle]()
+    var cpuParticlesBufferMeasurement = [CPUParticle]()
     var showParticles = true
     var isInViewSceneMode = true
     var isSavingFile = false
     var highConfCount = 0
+    var highConfCountMeasurement = 0
     var savingError: XError? = nil
     // Maximum number of points we store in the point cloud
     private let maxPoints = 15_000_000
+    private let maxHighConfCount = 15_000
     // Number of sample points on the grid
-    var numGridPoints = 500
+    var numGridPoints = 1_500
     // Particle's size in pixels
     private let particleSize: Float = 8
     // We only use portrait orientation in this app
@@ -91,7 +94,8 @@ final class Renderer {
     private lazy var cameraResolution = Float2(Float(sampleFrame.camera.imageResolution.width), Float(sampleFrame.camera.imageResolution.height))
     private lazy var viewToCamera = sampleFrame.displayTransform(for: orientation, viewportSize: viewportSize).inverted()
     private lazy var lastCameraTransform = sampleFrame.camera.transform
-    private var firstPointCompairasion: Float?
+    var firstPointCompairasion: Float?
+    var magneticHeading: Double?
     
     // interfaces
     var confidenceThreshold = 2
@@ -134,15 +138,9 @@ final class Renderer {
 //    func test() {
 //        print("Saving is executing...")
 //
-//        guard let frame = session.currentFrame
-//        else { fatalError("Can't get ARFrame") }
-//
-//        guard let device = MTLCreateSystemDefaultDevice()
-//        else { fatalError("Can't create MTLDevice") }
-//
 //        let allocator = MTKMeshBufferAllocator(device: device)
 //        let asset = MDLAsset(bufferAllocator: allocator)
-//        let meshAnchors = frame.anchors.compactMap { $0 as? ARMeshAnchor }
+//        let meshAnchors = session.currentFrame!.anchors.compactMap { $0 as? ARMeshAnchor }
 //
 //        for ma in meshAnchors {
 //            let geometry = ma.geometry
@@ -239,7 +237,7 @@ final class Renderer {
 //            fatalError("Can't export USD")
 //        }
 //    }
-//
+
     func drawRectResized(size: CGSize) {
         viewportSize = size
     }
@@ -352,33 +350,40 @@ final class Renderer {
         
         var retainingTextures = [capturedImageTextureY, capturedImageTextureCbCr, depthTexture, confidenceTexture]
         
-        commandBuffer.addCompletedHandler { buffer in
+        commandBuffer.addCompletedHandler { [self] buffer in
             retainingTextures.removeAll()
             // copy gpu point buffer to cpu
             var i = self.cpuParticlesBuffer.count
             while (i < self.maxPoints && self.particlesBuffer[i].position != simd_float3(0.0,0.0,0.0)) {
-                let position = self.particlesBuffer[i].position
+                var position = self.particlesBuffer[i].position
                 let color = self.particlesBuffer[i].color
                 let confidence = self.particlesBuffer[i].confidence
                 
-                
-                if (self.firstPointCompairasion == nil) {
-                    if confidence == 2 { self.highConfCount += 1 }
-                    self.firstPointCompairasion = position.y
-                    self.cpuParticlesBuffer.append(
-                        CPUParticle(position: position,
-                                    color: color,
-                                    confidence: confidence))
-//                    i += 1
-                } else if (abs(abs(self.firstPointCompairasion ?? 0) - abs(position.y)) < 0.005) {
-                    if confidence == 2 { self.highConfCount += 1 }
-                    self.cpuParticlesBuffer.append(
-                        CPUParticle(position: position,
-                                    color: color,
-                                    confidence: confidence))
-//                    i += 1
+                if (self.highConfCountMeasurement < self.maxHighConfCount){
+                    if (self.firstPointCompairasion == nil) {
+                        if confidence == 2 { self.highConfCountMeasurement += 1 }
+                        self.firstPointCompairasion = position.y
+                        self.cpuParticlesBufferMeasurement.append(
+                            CPUParticle(position: position,
+                                        color: color,
+                                        confidence: confidence))
+                    } else if (abs(abs(self.firstPointCompairasion ?? 0) - abs(position.y)) < 0.005) {
+//                        print(simd_distance(position, simd_float3(0.0,self.firstPointCompairasion ?? 0.0,0.0)))
+                        if confidence == 2 { self.highConfCountMeasurement += 1 }
+                        position.y = firstPointCompairasion ?? 0.0
+                        self.cpuParticlesBufferMeasurement.append(
+                            CPUParticle(position: position,
+                                        color: color,
+                                        confidence: confidence))
+                    }
                 }
                 
+                
+                if confidence == 2 { self.highConfCount += 1 }
+                self.cpuParticlesBuffer.append(
+                    CPUParticle(position: position,
+                                color: color,
+                                confidence: confidence))
                 i += 1
                 
             }
@@ -417,7 +422,8 @@ extension Renderer {
                        beforeGlobalThread: [() -> Void],
                        afterGlobalThread: [() -> Void],
                        errorCallback: (XError) -> Void,
-                       format: String) {
+                       format: String,
+                       for purpose: String) {
         
         guard !isSavingFile else {
             return errorCallback(XError.alreadySavingFile)
@@ -432,12 +438,26 @@ extension Renderer {
                 for task in beforeGlobalThread { task() }
             }
 
-            do { self.savedCloudURLs.append(try PLYFile.write(
-                    fileName: fileName,
-                    cpuParticlesBuffer: &self.cpuParticlesBuffer,
-                    highConfCount: self.highConfCount,
-                    format: format)) } catch {
-                self.savingError = XError.savingFailed
+            if (purpose == "Exporting") {
+                var cpuParticlesBufferProcessed = Self.rotateArroundYAxis(angle: self.magneticHeading!, input: self.cpuParticlesBuffer)
+                
+                do { self.savedCloudURLs.append(try PLYFile.write(
+                        fileName: fileName,
+                        cpuParticlesBuffer: &cpuParticlesBufferProcessed,
+                        highConfCount: self.highConfCount,
+                        format: format)) } catch {
+                    self.savingError = XError.savingFailed
+                }
+            } else {
+                var cpuParticlesBufferProcessed = Self.rotateArroundYAxis(angle: self.magneticHeading!, input: self.cpuParticlesBufferMeasurement)
+                
+                do { self.savedCloudURLs.append(try PLYFile.write(
+                        fileName: fileName,
+                        cpuParticlesBuffer: &cpuParticlesBufferProcessed,
+                        highConfCount: self.highConfCountMeasurement,
+                        format: format)) } catch {
+                    self.savingError = XError.savingFailed
+                }
             }
     
             DispatchQueue.main.async {
@@ -449,9 +469,11 @@ extension Renderer {
     
     func clearParticles() {
         highConfCount = 0
+        highConfCountMeasurement = 0
         currentPointIndex = 0
         currentPointCount = 0
         cpuParticlesBuffer = [CPUParticle]()
+        cpuParticlesBufferMeasurement = [CPUParticle]()
         rgbUniformsBuffers = [MetalBuffer<RGBUniforms>]()
         pointCloudUniformsBuffers = [MetalBuffer<PointCloudUniforms>]()
         firstPointCompairasion = nil
@@ -476,7 +498,7 @@ extension Renderer {
 private extension Renderer {
     func makeUnprojectionPipelineState() -> MTLRenderPipelineState? {
         guard let vertexFunction = library.makeFunction(name: "unprojectVertex") else {
-                return nil
+            return nil
         }
         
         let descriptor = MTLRenderPipelineDescriptor()
@@ -490,8 +512,8 @@ private extension Renderer {
     
     func makeRGBPipelineState() -> MTLRenderPipelineState? {
         guard let vertexFunction = library.makeFunction(name: "rgbVertex"),
-            let fragmentFunction = library.makeFunction(name: "rgbFragment") else {
-                return nil
+              let fragmentFunction = library.makeFunction(name: "rgbFragment") else {
+            return nil
         }
         
         let descriptor = MTLRenderPipelineDescriptor()
@@ -505,8 +527,8 @@ private extension Renderer {
     
     func makeParticlePipelineState() -> MTLRenderPipelineState? {
         guard let vertexFunction = library.makeFunction(name: "particleVertex"),
-            let fragmentFunction = library.makeFunction(name: "particleFragment") else {
-                return nil
+              let fragmentFunction = library.makeFunction(name: "particleFragment") else {
+            return nil
         }
         
         let descriptor = MTLRenderPipelineDescriptor()
@@ -560,7 +582,7 @@ private extension Renderer {
         if status != kCVReturnSuccess {
             texture = nil
         }
-
+        
         return texture
     }
     
@@ -584,8 +606,31 @@ private extension Renderer {
             [0, -1, 0, 0],
             [0, 0, -1, 0],
             [0, 0, 0, 1] )
-
+        
         let rotationAngle = Float(cameraToDisplayRotation(orientation: orientation)) * .degreesToRadian
         return flipYZ * matrix_float4x4(simd_quaternion(rotationAngle, Float3(0, 0, 1)))
+    }
+    
+    static func rotateArroundYAxis(angle: Double, input: [CPUParticle], atOrigin: Bool = false) -> [CPUParticle] {
+        let cosinAngle = cosf(Float(angle) * .degreesToRadian)
+        let sinAngle = sinf(Float(angle) * .degreesToRadian)
+        var output = [CPUParticle]()
+        //        let rotateY = matrix_float4x4(
+        //            [cosf(Float(angle)), 0, sinf(Float(angle)), 0],
+        //            [0, 1, 0, 0],
+        //            [-sinf(Float(angle)), 0, cosf(Float(angle)), 0],
+        //            [0, 0, 0, 1] )
+        
+        input.forEach { ele in
+            let newPosition = simd_float3(ele.position.x*cosinAngle + ele.position.z*sinAngle, atOrigin ? 0.0 : ele.position.y, ele.position.z*cosinAngle - ele.position.x*sinAngle)
+            output.append(
+                CPUParticle(position: newPosition,
+                            color: ele.color / 255,
+                            confidence: ele.confidence))
+        }
+        
+        
+        
+        return output
     }
 }

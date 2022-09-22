@@ -173,35 +173,35 @@ class SaveController : UIViewController, UIPickerViewDelegate, UIPickerViewDataS
     @objc func executeSave() -> Void {
         beforeSave()
         
-        let fileName = !fileNameInput.text!.isEmpty ? fileNameInput.text : "untitled"
+        let fileName = !fileNameInput.text!.isEmpty ? fileNameInput.text : "foot_pointcloud"
         let format = "Ascii"
             .lowercased(with: .none)
             .split(separator: " ")
             .joined(separator: "_")
         
-        mainController.renderer.saveAsPlyFile(
-            fileName: fileName!,
-            beforeGlobalThread: [beforeSave, spinner.startAnimating],
-            afterGlobalThread: [dismissModal, spinner.stopAnimating, mainController.afterSave],
-            errorCallback: onSaveError,
-            format: format)
+//        mainController.renderer.saveAsPlyFile(
+//            fileName: fileName!,
+//            beforeGlobalThread: [beforeSave, spinner.startAnimating],
+//            afterGlobalThread: [dismissModal, spinner.stopAnimating, mainController.afterSave],
+//            errorCallback: onSaveError,
+//            format: format)
     }
     
     @objc func executeMeasure() -> Void {
         beforeSave()
         
-        let fileName = !fileNameInput.text!.isEmpty ? fileNameInput.text : "untitled"
+        let fileName = !fileNameInput.text!.isEmpty ? fileNameInput.text : "measurement"
         let format = "Ascii"
             .lowercased(with: .none)
             .split(separator: " ")
             .joined(separator: "_")
         
-        mainController.renderer.saveAsPlyFile(
-            fileName: fileName!,
-            beforeGlobalThread: [beforeSave, spinner.startAnimating],
-            afterGlobalThread: [dismissModal, spinner.stopAnimating, mainController.measurement],
-            errorCallback: onSaveError,
-            format: format)
+//        mainController.renderer.saveAsPlyFile(
+//            fileName: fileName!,
+//            beforeGlobalThread: [beforeSave, spinner.startAnimating],
+//            afterGlobalThread: [dismissModal, spinner.stopAnimating, mainController.measurement],
+//            errorCallback: onSaveError,
+//            format: format)
     }
     
 }
